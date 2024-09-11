@@ -2,13 +2,27 @@ package sessions
 
 import (
 	"encoding/gob"
+	"log"
 	"net/http"
+	"os"
 
 	"github.com/gorilla/sessions"
 	"github.com/gurix/sign_up_bot/models"
 )
 
-var store = sessions.NewCookieStore([]byte("your-secret-key"))
+var store = sessions.NewCookieStore([]byte(SecretKey()))
+
+func SecretKey() string {
+	// Fetch the value of the environment variable "GEHEIMNIS"
+	secret := os.Getenv("GEHEIMNIS")
+
+	// Check if the environment variable is set
+	if secret == "" {
+		log.Fatalf("The environment variable 'GEHEIMNIS' is not set.")
+	}
+
+	return secret
+}
 
 func init() {
 	gob.Register([]models.ChatMessage{}) // Register the slice type for session storage
