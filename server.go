@@ -19,6 +19,7 @@ import (
 
 // ChatMessage represents a chat message structure
 type ChatMessage struct {
+	CreatedAt time.Time `json:"created_at"`
 	Message string `json:"message"`
 	Result string `json:"result"`
 }
@@ -102,6 +103,7 @@ func handleChat(w http.ResponseWriter, r *http.Request) {
 	
 	// Simulate bot response
 	chatMessage.Result = "You said: \"" + chatMessage.Message + "\""
+	chatMessage.CreatedAt = time.Now()
 
 	// Append messages to session
 	messages, ok := session.Values["messages"].([]ChatMessage)
