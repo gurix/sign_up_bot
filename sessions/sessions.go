@@ -48,4 +48,3 @@ func AppendMessageToSession(session *sessions.Session, message models.ChatMessag
 	session.Values["messages"] = messages
 	return messages
 }
-
