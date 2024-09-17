@@ -26,7 +26,7 @@ func main() {
 	})
 
 	// API endpoint to handle chat requests
-	r.Post("/v1/chat", handlers.HandleChat)
+	r.Post("/v1/chat", handlers.ChatInput)
 
 	r.Get("/v1/chats", handlers.GetChats)
 	// Fetch the port from the environment variable or use 8000 as a default

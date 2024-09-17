@@ -5,29 +5,58 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/gorilla/sessions"
 	"github.com/gurix/sign_up_bot/models"
-	"github.com/gurix/sign_up_bot/sessions"
+	s "github.com/gurix/sign_up_bot/sessions"
 	"github.com/gurix/sign_up_bot/store"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func GetChats(w http.ResponseWriter, r *http.Request) {
-
-	// Initialize session
-	session := sessions.GetSession(w, r)
-
-	messages := sessions.GetMessagesFromSession(session)
-
+// sendJSONResponse is a helper function to encode data to JSON and send it as a response
+func sendJSONResponse(w http.ResponseWriter, data interface{}) {
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(messages)
+	if err := json.NewEncoder(w).Encode(data); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 }
 
-// HandleChat handles incoming chat messages and stores them in the session and MongoDB
-func HandleChat(w http.ResponseWriter, r *http.Request) {
+func GetChats(w http.ResponseWriter, r *http.Request) {
 	// Initialize session
-	session := sessions.GetSession(w, r)
+	session := initializeSession(w, r)
+
+	// Fetch all messages of a session
+	messages := s.GetMessagesFromSession(session)
+
+	// Send response back to the client
+	sendJSONResponse(w, messages)
+}
+
+// initializeSession initializes the session and returns it
+func initializeSession(w http.ResponseWriter, r *http.Request) *sessions.Session {
+	session := s.GetSession(w, r)
+	w.Header().Set("Content-Type", "application/json")
+	return session
+}
+
+// updateChatCollection updates or inserts chat messages in the MongoDB
+func updateChatCollection(sessionID string, chatMessage models.ChatMessage) error {
+	_, err := store.ChatCollection.UpdateOne(
+		context.TODO(),
+		bson.M{"session_id": sessionID},
+		bson.M{
+			"$set":  bson.M{"session_id": sessionID},
+			"$push": bson.M{"messages": chatMessage},
+		},
+		options.Update().SetUpsert(true),
+	)
+	return err
+}
+
+func ChatInput(w http.ResponseWriter, r *http.Request) {
+	// Initialize session
+	session := initializeSession(w, r)
 
 	// Retrieve the session ID
 	sessionID := session.ID
@@ -43,29 +72,20 @@ func HandleChat(w http.ResponseWriter, r *http.Request) {
 	chatMessage.Result = "You said: \"" + chatMessage.Message + "\""
 
 	// Append messages to session
-	sessions.AppendMessageToSession(session, chatMessage)
+	s.AppendMessageToSession(session, chatMessage)
 
 	// Save session
-	if err := sessions.SaveSession(r, w, session); err != nil {
+	if err := s.SaveSession(r, w, session); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	// Store or update conversation in MongoDB
-	_, err := store.ChatCollection.UpdateOne(
-		context.TODO(),
-		bson.M{"session_id": sessionID},
-		bson.M{
-			"$set":  bson.M{"session_id": sessionID},
-			"$push": bson.M{"messages": chatMessage}, // Use $push to append the new message
-		},
-		options.Update().SetUpsert(true),
-	)
-	if err != nil {
+	// Update chat collection in MongoDB
+	if err := updateChatCollection(sessionID, chatMessage); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(chatMessage)
+	// Send response back to the client
+	sendJSONResponse(w, chatMessage)
 }
