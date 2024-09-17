@@ -13,14 +13,21 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
+func GetChats(w http.ResponseWriter, r *http.Request) {
+
+	// Initialize session
+	session := sessions.GetSession(w, r)
+
+	messages := sessions.GetMessagesFromSession(session)
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(messages)
+}
+
 // HandleChat handles incoming chat messages and stores them in the session and MongoDB
 func HandleChat(w http.ResponseWriter, r *http.Request) {
 	// Initialize session
-	session, err := sessions.GetSession(r)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	session := sessions.GetSession(w, r)
 
 	// Retrieve the session ID
 	sessionID := session.ID
@@ -45,7 +52,7 @@ func HandleChat(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Store or update conversation in MongoDB
-	_, err = store.ChatCollection.UpdateOne(
+	_, err := store.ChatCollection.UpdateOne(
 		context.TODO(),
 		bson.M{"session_id": sessionID},
 		bson.M{

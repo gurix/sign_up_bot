@@ -49,8 +49,25 @@
                         this.chatHistory.push({ user: message, bot: data.result });
                     })
                     .catch(error => console.error('Error:', error));
-                }
-            }
+                },
+								fetchChatHistory() {
+										fetch('/v1/chats', {
+											method: 'GET',
+											headers: { 'Content-Type': 'application/json' }
+										})
+										.then(response => response.json())
+										.then(data => {
+												this.chatHistory = data.map(chat => ({
+													user: chat.message,
+													bot: chat.result
+											}));
+										})
+										.catch(error => console.error('Error fetching chat history:', error));
+								}
+										},
+						mounted() {
+							this.fetchChatHistory();
+						}
         });
 
         app.mount('#app');
