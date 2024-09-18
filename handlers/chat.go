@@ -9,14 +9,14 @@ import (
 	"github.com/gurix/sign_up_bot/models"
 	s "github.com/gurix/sign_up_bot/sessions"
 	"github.com/gurix/sign_up_bot/store"
-
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-// sendJSONResponse is a helper function to encode data to JSON and send it as a response
+// sendJSONResponse is a helper function to encode data to JSON and send it as a response.
 func sendJSONResponse(w http.ResponseWriter, data interface{}) {
 	w.Header().Set("Content-Type", "application/json")
+
 	if err := json.NewEncoder(w).Encode(data); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
@@ -33,14 +33,14 @@ func GetChats(w http.ResponseWriter, r *http.Request) {
 	sendJSONResponse(w, messages)
 }
 
-// initializeSession initializes the session and returns it
+// initializeSession initializes the session and returns it.
 func initializeSession(w http.ResponseWriter, r *http.Request) *sessions.Session {
 	session := s.GetSession(w, r)
 	w.Header().Set("Content-Type", "application/json")
 	return session
 }
 
-// updateChatCollection updates or inserts chat messages in the MongoDB
+// updateChatCollection updates or inserts chat messages in the MongoDB.
 func updateChatCollection(sessionID string, chatMessage models.ChatMessage) error {
 	_, err := store.ChatCollection.UpdateOne(
 		context.TODO(),

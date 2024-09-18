@@ -28,7 +28,7 @@ func init() {
 	gob.Register([]models.ChatMessage{}) // Register the slice type for session storage
 }
 
-// GetSession retrieves the session from the request
+// GetSession retrieves the session from the request.
 func GetSession(w http.ResponseWriter, r *http.Request) *sessions.Session {
 	s, err := store.Get(r, "chat-session")
 	if err != nil {
@@ -39,7 +39,7 @@ func GetSession(w http.ResponseWriter, r *http.Request) *sessions.Session {
 	return s
 }
 
-// SaveSession saves the session data
+// SaveSession saves the session data.
 func SaveSession(r *http.Request, w http.ResponseWriter, session *sessions.Session) error {
 	return sessions.Save(r, w)
 }
@@ -53,7 +53,7 @@ func GetMessagesFromSession(session *sessions.Session) []models.ChatMessage {
 	return messages
 }
 
-// AppendMessageToSession appends a message to the session
+// AppendMessageToSession appends a message to the session.
 func AppendMessageToSession(session *sessions.Session, message models.ChatMessage) []models.ChatMessage {
 	messages := GetMessagesFromSession(session)
 
