@@ -30,18 +30,19 @@ func init() {
 
 // GetSession retrieves the session from the request.
 func GetSession(w http.ResponseWriter, r *http.Request) *sessions.Session {
-	s, err := store.Get(r, "chat-session")
+	session, err := store.Get(r, "chat-session")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+
 		return nil
 	}
 
-	return s
+	return session
 }
 
 // SaveSession saves the session data.
-func SaveSession(r *http.Request, w http.ResponseWriter, session *sessions.Session) error {
-	return sessions.Save(r, w)
+func SaveSession(request *http.Request, writer http.ResponseWriter) error {
+	return sessions.Save(request, writer)
 }
 
 func GetMessagesFromSession(session *sessions.Session) []models.ChatMessage {
@@ -59,5 +60,6 @@ func AppendMessageToSession(session *sessions.Session, message models.ChatMessag
 
 	messages = append(messages, message)
 	session.Values["messages"] = messages
+
 	return messages
 }

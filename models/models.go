@@ -4,7 +4,7 @@ import "time"
 
 // ChatMessage represents a chat message structure.
 type ChatMessage struct {
-	CreatedAt time.Time `json:"created_at"`
+	CreatedAt time.Time `json:"createdAt"`
 	Message   string    `json:"message"`
 	Result    string    `json:"result"`
 }

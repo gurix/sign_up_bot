@@ -22,21 +22,22 @@ func sendJSONResponse(w http.ResponseWriter, data interface{}) {
 	}
 }
 
-func GetChats(w http.ResponseWriter, r *http.Request) {
+func GetChats(writer http.ResponseWriter, request *http.Request) {
 	// Initialize session
-	session := initializeSession(w, r)
+	session := initializeSession(writer, request)
 
 	// Fetch all messages of a session
 	messages := s.GetMessagesFromSession(session)
 
 	// Send response back to the client
-	sendJSONResponse(w, messages)
+	sendJSONResponse(writer, messages)
 }
 
 // initializeSession initializes the session and returns it.
 func initializeSession(w http.ResponseWriter, r *http.Request) *sessions.Session {
 	session := s.GetSession(w, r)
 	w.Header().Set("Content-Type", "application/json")
+
 	return session
 }
 
@@ -51,20 +52,22 @@ func updateChatCollection(sessionID string, chatMessage models.ChatMessage) erro
 		},
 		options.Update().SetUpsert(true),
 	)
+
 	return err
 }
 
-func ChatInput(w http.ResponseWriter, r *http.Request) {
+func ChatInput(writer http.ResponseWriter, request *http.Request) {
 	// Initialize session
-	session := initializeSession(w, r)
+	session := initializeSession(writer, request)
 
 	// Retrieve the session ID
 	sessionID := session.ID
 
 	// Parse incoming message
 	var chatMessage models.ChatMessage
-	if err := json.NewDecoder(r.Body).Decode(&chatMessage); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+	if err := json.NewDecoder(request.Body).Decode(&chatMessage); err != nil {
+		http.Error(writer, err.Error(), http.StatusBadRequest)
+
 		return
 	}
 
@@ -75,17 +78,19 @@ func ChatInput(w http.ResponseWriter, r *http.Request) {
 	s.AppendMessageToSession(session, chatMessage)
 
 	// Save session
-	if err := s.SaveSession(r, w, session); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	if err := s.SaveSession(request, writer); err != nil {
+		http.Error(writer, err.Error(), http.StatusInternalServerError)
+
 		return
 	}
 
 	// Update chat collection in MongoDB
 	if err := updateChatCollection(sessionID, chatMessage); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(writer, err.Error(), http.StatusInternalServerError)
+
 		return
 	}
 
 	// Send response back to the client
-	sendJSONResponse(w, chatMessage)
+	sendJSONResponse(writer, chatMessage)
 }

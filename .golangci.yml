@@ -10,6 +10,7 @@ linters-settings:
           - $gostd
           - "github.com/go-chi/chi/v5"
           - "github.com/gurix/sign_up_bot"
+          - "github.com/gorilla/sessions"
         deny:
           - pkg: io/ioutil
             desc: "replaced by io and os packages since Go 1.16: https://tip.golang.org/doc/go1.16#ioutil"

@@ -13,10 +13,14 @@ var (
 	ChatCollection *mongo.Collection
 )
 
+const timeout = 10 * time.Second
+
 // InitMongoDB initializes the MongoDB client and connects to the database.
 func InitMongoDB() {
 	var err error
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+
 	defer cancel()
 
 	Client, err = mongo.Connect(ctx, options.Client().ApplyURI("mongodb://localhost:27017"))
