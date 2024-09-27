@@ -2,8 +2,11 @@ package store
 
 import (
 	"context"
+	"errors"
 	"time"
 
+	"github.com/gurix/sign_up_bot/models"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -29,4 +32,36 @@ func InitMongoDB() {
 	}
 
 	ChatCollection = Client.Database("chatbotdb").Collection("sessions")
+}
+
+// UpdateChatCollection updates or inserts chat messages in the MongoDB.
+func UpdateChatCollection(sessionID string, chatMessage models.ChatMessage) error {
+	_, err := ChatCollection.UpdateOne(
+		context.TODO(),
+		bson.M{"session_id": sessionID},
+		bson.M{
+			"$set":  bson.M{"session_id": sessionID},
+			"$push": bson.M{"messages": chatMessage},
+		},
+		options.Update().SetUpsert(true),
+	)
+
+	return err
+}
+
+func GetDialog(sessionID string) (models.ChatDialog, error) {
+	var result models.ChatDialog
+	err := ChatCollection.FindOne(
+		context.TODO(),
+		bson.M{"session_id": sessionID},
+	).Decode(&result)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return models.ChatDialog{}, errors.New("no dialog found")
+		}
+
+		return models.ChatDialog{}, err // Return any other errors
+	}
+
+	return result, nil
 }

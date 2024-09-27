@@ -10,6 +10,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/gurix/sign_up_bot/handlers"
+	my_middleware "github.com/gurix/sign_up_bot/middleware"
 	"github.com/gurix/sign_up_bot/store"
 )
 
@@ -21,6 +22,7 @@ func main() {
 	request := chi.NewRouter()
 	request.Use(middleware.Logger)
 	request.Use(middleware.Recoverer)
+	request.Use(my_middleware.DialogIDMiddleware)
 
 	// Serve static files (index.html)
 	request.Get("/", func(w http.ResponseWriter, r *http.Request) {
@@ -38,7 +40,7 @@ func main() {
 		port = "8000"
 	}
 
-	const readWriteTimeout = 10 * time.Second
+	const readWriteTimeout = 30 * time.Second
 
 	const idleTimeout = 6 * readWriteTimeout
 
