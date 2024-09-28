@@ -9,12 +9,15 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/gorilla/sessions"
 	"github.com/gurix/sign_up_bot/handlers"
-	my_middleware "github.com/gurix/sign_up_bot/middleware"
 	"github.com/gurix/sign_up_bot/store"
 )
 
 func main() {
+	// Initialize the session store inside main and rename it to sessionHandling
+	sessionHandling := sessions.NewCookieStore([]byte(SecretKey()))
+
 	// Initialize MongoDB
 	store.InitMongoDB()
 
@@ -22,7 +25,7 @@ func main() {
 	request := chi.NewRouter()
 	request.Use(middleware.Logger)
 	request.Use(middleware.Recoverer)
-	request.Use(my_middleware.DialogIDMiddleware)
+	request.Use(DialogIDMiddleware(sessionHandling))
 
 	// Serve static files (index.html)
 	request.Get("/", func(w http.ResponseWriter, r *http.Request) {
@@ -67,4 +70,13 @@ func main() {
 		ConnContext:                  nil,
 	}
 	log.Fatal(server.ListenAndServe())
+}
+
+// SecretKey function remains unchanged
+func SecretKey() string {
+	secret := os.Getenv("GEHEIMNIS")
+	if secret == "" {
+		log.Fatalf("The environment variable 'GEHEIMNIS' is not set.")
+	}
+	return secret
 }
