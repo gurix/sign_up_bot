@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/gurix/sign_up_bot/llama"
+	"github.com/gurix/sign_up_bot/llm"
 	"github.com/gurix/sign_up_bot/models"
 	"github.com/gurix/sign_up_bot/store"
 )
@@ -39,6 +39,11 @@ func GetChats(writer http.ResponseWriter, request *http.Request) {
 }
 
 func ChatInput(writer http.ResponseWriter, request *http.Request) {
+	var ai llm.Ai
+
+	llmClient := llm.OllamaConnect()
+	ai.Client = llmClient
+
 	// Parse incoming message
 	var chatMessage models.ChatMessage
 	if err := json.NewDecoder(request.Body).Decode(&chatMessage); err != nil {
@@ -48,7 +53,7 @@ func ChatInput(writer http.ResponseWriter, request *http.Request) {
 	}
 
 	// Retrieve the result from the model
-	resp, err := llama.GenerateResponse(context.Background(), chatMessage.Message)
+	resp, err := ai.GenerateResponse(context.Background(), chatMessage.Message)
 	if err != nil {
 		http.Error(writer, err.Error(), http.StatusBadRequest)
 
@@ -56,7 +61,7 @@ func ChatInput(writer http.ResponseWriter, request *http.Request) {
 	}
 
 	// Just use the first choice for the moment
-	chatMessage.Result = llama.GetFirstContent(resp)
+	chatMessage.Result = llm.GetFirstContent(resp)
 
 	// Update chat collection
 	if err := store.UpdateChatCollection(getDialogID(request), chatMessage); err != nil {
