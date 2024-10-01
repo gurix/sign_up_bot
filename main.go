@@ -43,7 +43,7 @@ func main() {
 		port = "8000"
 	}
 
-	const readWriteTimeout = 30 * time.Second
+	const readWriteTimeout = 300 * time.Second
 
 	const idleTimeout = 6 * readWriteTimeout
 
