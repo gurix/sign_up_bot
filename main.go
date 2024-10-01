@@ -16,7 +16,7 @@ import (
 
 func main() {
 	// Initialize the session store inside main and rename it to sessionHandling
-	sessionHandling := sessions.NewCookieStore([]byte(SecretKey()))
+	sessionHandling := sessions.NewCookieStore([]byte("GEHEIMNIS"))
 
 	// Initialize MongoDB
 	store.InitMongoDB()
@@ -70,13 +70,4 @@ func main() {
 		ConnContext:                  nil,
 	}
 	log.Fatal(server.ListenAndServe())
-}
-
-// SecretKey function remains unchanged
-func SecretKey() string {
-	secret := os.Getenv("GEHEIMNIS")
-	if secret == "" {
-		log.Fatalf("The environment variable 'GEHEIMNIS' is not set.")
-	}
-	return secret
 }
