@@ -52,8 +52,14 @@ func ChatInput(writer http.ResponseWriter, request *http.Request) {
 		return
 	}
 
+	dialog, err := store.GetDialog(getDialogID(request))
+	if err != nil && err.Error() != "no dialog found" {
+		http.Error(writer, err.Error(), http.StatusBadRequest)
+
+		return
+	}
 	// Retrieve the result from the model
-	resp, err := ai.GenerateResponse(context.Background(), chatMessage.Message)
+	resp, err := ai.GenerateResponse(context.Background(), chatMessage.Message, dialog)
 	if err != nil {
 		http.Error(writer, err.Error(), http.StatusBadRequest)
 
