@@ -27,14 +27,14 @@ func GetChats(writer http.ResponseWriter, request *http.Request) {
 	// Fetch all messages of a session
 	dialog, err := store.GetDialog(getDialogID(request))
 	if err != nil {
-		if err.Error() == "no dialog found" {
-			http.NotFound(writer, request)
-		} else {
-			http.Error(writer, err.Error(), http.StatusInternalServerError)
-		}
+		http.Error(writer, err.Error(), http.StatusInternalServerError)
 	} else {
-		// Send response back to the client
-		sendJSONResponse(writer, dialog.Messages)
+		// If dialog.Message is nil, return an empty slice
+		if dialog.Messages == nil {
+			sendJSONResponse(writer, []models.ChatMessage{})
+		} else {
+			sendJSONResponse(writer, dialog.Messages)
+		}
 	}
 }
 
@@ -53,7 +53,7 @@ func ChatInput(writer http.ResponseWriter, request *http.Request) {
 	}
 
 	dialog, err := store.GetDialog(getDialogID(request))
-	if err != nil && err.Error() != "no dialog found" {
+	if err != nil {
 		http.Error(writer, err.Error(), http.StatusBadRequest)
 
 		return

@@ -2,7 +2,6 @@ package store
 
 import (
 	"context"
-	"errors"
 	"time"
 
 	"github.com/gurix/sign_up_bot/models"
@@ -57,7 +56,7 @@ func GetDialog(sessionID string) (models.ChatDialog, error) {
 	).Decode(&result)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
-			return models.ChatDialog{}, errors.New("no dialog found")
+			return models.ChatDialog{}, nil
 		}
 
 		return models.ChatDialog{}, err // Return any other errors
