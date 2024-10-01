@@ -2,5 +2,5 @@
 
 ## Running via `go run`
 ```sh
-GEHEIMNIS=abc go run main.go
+go run *.go
 ```

@@ -9,11 +9,15 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/gorilla/sessions"
 	"github.com/gurix/sign_up_bot/handlers"
 	"github.com/gurix/sign_up_bot/store"
 )
 
 func main() {
+	// Initialize the session store inside main and rename it to sessionHandling
+	sessionHandling := sessions.NewCookieStore([]byte("GEHEIMNIS"))
+
 	// Initialize MongoDB
 	store.InitMongoDB()
 
@@ -21,6 +25,7 @@ func main() {
 	request := chi.NewRouter()
 	request.Use(middleware.Logger)
 	request.Use(middleware.Recoverer)
+	request.Use(DialogIDMiddleware(sessionHandling))
 
 	// Serve static files (index.html)
 	request.Get("/", func(w http.ResponseWriter, r *http.Request) {
@@ -38,7 +43,7 @@ func main() {
 		port = "8000"
 	}
 
-	const readWriteTimeout = 10 * time.Second
+	const readWriteTimeout = 300 * time.Second
 
 	const idleTimeout = 6 * readWriteTimeout
 

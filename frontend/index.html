@@ -6,21 +6,53 @@
     <title>Chatbot</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script> <!-- Added marked.js for markdown parsing -->
+    <style>
+        .chat-container {
+            height: 80vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .chat-history {
+            flex-grow: 1;
+            overflow-y: auto;
+            margin-bottom: 1rem;
+        }
+        .input-container {
+            position: relative;
+        }
+        .spinner-border {
+            margin-left: 10px;
+        }
+        .disabled-input {
+            pointer-events: none;
+            opacity: 0.6;
+        }
+        .bot-message {
+            white-space: pre-wrap;
+        }
+				.bot-message p:last-child {
+            margin-bottom: 0; /* No margin on the last paragraph */
+        }
+    </style>
 </head>
 <body>
     <div id="app" class="d-flex justify-content-center align-items-center vh-100">
-        <div class="w-50">
+        <div class="w-50 chat-container">
             <h3 class="text-center mb-4">Simple Chatbot</h3>
-            <div class="input-group mb-3">
-                <input type="text" v-model="userMessage" class="form-control" placeholder="Type your message" @keyup.enter="sendMessage">
-                <button class="btn btn-primary" @click="sendMessage">Send</button>
-            </div>
-            <ul class="list-group mb-3">
+            <div class="chat-history list-group mb-3" ref="chatHistory">
                 <li v-for="message in chatHistory" :key="message.id" class="list-group-item">
                     <strong>User:</strong> {{ message.user }} <br>
-                    <strong>Bot:</strong> {{ message.bot }}
+                    <strong>Bot:</strong> <span class="bot-message" v-html="renderMarkdown(message.bot)"></span> <!-- Rendered as markdown -->
                 </li>
-            </ul>
+            </div>
+            <div class="input-container input-group" :class="{ 'disabled-input': isLoading }">
+                <input type="text" v-model="userMessage" class="form-control" placeholder="Type your message" @keyup.enter="sendMessage" :disabled="isLoading">
+                <button class="btn btn-primary" @click="sendMessage" :disabled="isLoading">Send</button>
+                <div v-if="isLoading" class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -29,15 +61,17 @@
             data() {
                 return {
                     userMessage: '',
-                    chatHistory: []
+                    chatHistory: [],
+                    isLoading: false
                 };
             },
             methods: {
                 sendMessage() {
-                    if (this.userMessage.trim() === '') return;
+                    if (this.userMessage.trim() === '' || this.isLoading) return;
 
                     const message = this.userMessage;
                     this.userMessage = '';
+                    this.isLoading = true; // Start the loading state
 
                     fetch('/v1/chat', {
                         method: 'POST',
@@ -47,30 +81,51 @@
                     .then(response => response.json())
                     .then(data => {
                         this.chatHistory.push({ user: message, bot: data.result });
+                        this.$nextTick(() => {
+                            this.scrollToBottom(); // Scroll after the DOM is updated
+                        });
                     })
-                    .catch(error => console.error('Error:', error));
+                    .catch(error => console.error('Error:', error))
+                    .finally(() => {
+                        this.isLoading = false; // End the loading state
+                    });
                 },
-								fetchChatHistory() {
-										fetch('/v1/chats', {
-											method: 'GET',
-											headers: { 'Content-Type': 'application/json' }
-										})
-										.then(response => response.json())
-										.then(data => {
-												this.chatHistory = data.map(chat => ({
-													user: chat.message,
-													bot: chat.result
-											}));
-										})
-										.catch(error => console.error('Error fetching chat history:', error));
-								}
-										},
-						mounted() {
-							this.fetchChatHistory();
-						}
+                fetchChatHistory() {
+                    this.isLoading = true;
+                    fetch('/v1/chats', {
+                        method: 'GET',
+                        headers: { 'Content-Type': 'application/json' }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        this.chatHistory = data.map(chat => ({
+                            user: chat.message,
+                            bot: chat.result
+                        }));
+                        this.$nextTick(() => {
+                            this.scrollToBottom(); // Scroll after the DOM is updated
+                        });
+                    })
+                    .catch(error => console.error('Error fetching chat history:', error))
+                    .finally(() => {
+                        this.isLoading = false;
+                    });
+                },
+                scrollToBottom() {
+                    const chatHistoryContainer = this.$refs.chatHistory;
+                    chatHistoryContainer.scrollTop = chatHistoryContainer.scrollHeight;
+                },
+                renderMarkdown(text) {
+                    return marked.parse(text); // Convert markdown to HTML using marked.js
+                }
+            },
+            mounted() {
+                this.fetchChatHistory();
+            }
         });
 
         app.mount('#app');
     </script>
 </body>
 </html>
+
